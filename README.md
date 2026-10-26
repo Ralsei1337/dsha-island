@@ -278,9 +278,9 @@ DSHA 没有任何文件/签名/数据被修改，回滚后通知恢复原样。
 
 ### 安装
 
-1. 安装 `out/dsha-island-lite-0.1.2.apk`；
+1. 安装 `out/current/dsha-island-lite-0.1.2.apk`；
 2. 打开 App → 允许通知 → 点「启动岛服务」；
-3. 在 DSHA 插件页安装 `out/dsh-island-lite-0.1.2.tar.gz`，重启一次 DSH/Web；
+3. 在 DSHA 插件页安装 `out/current/dsh-island-lite-0.1.2.tar.gz`，重启一次 DSH/Web；
 4. 回桌面跑一个任务，岛上应出现 `DSHA 图标 + 动作 + 内容`。
 
 ### root 路线显示路径（0.1.4）

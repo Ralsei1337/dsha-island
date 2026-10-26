@@ -71,8 +71,8 @@ fi
         apk/base.apk
 )
 
-mkdir -p "$PROJECT/out"
-cp "$BUILD/dsha-island-lite.apk" "$PROJECT/out/dsha-island-lite-$VERSION.apk"
-echo "built: $PROJECT/out/dsha-island-lite-$VERSION.apk"
-sha256sum "$PROJECT/out/dsha-island-lite-$VERSION.apk" || true
-ls -lh "$PROJECT/out/dsha-island-lite-$VERSION.apk"
+mkdir -p "$PROJECT/out/current"
+cp "$BUILD/dsha-island-lite.apk" "$PROJECT/out/current/dsha-island-lite-$VERSION.apk"
+echo "built: $PROJECT/out/current/dsha-island-lite-$VERSION.apk"
+sha256sum "$PROJECT/out/current/dsha-island-lite-$VERSION.apk" || true
+ls -lh "$PROJECT/out/current/dsha-island-lite-$VERSION.apk"

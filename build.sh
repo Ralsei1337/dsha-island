@@ -77,8 +77,8 @@ fi
         apk/base.apk
 )
 
-mkdir -p "$ROOT/out"
-cp "$BUILD/dsha-island.apk" "$ROOT/out/dsha-island-$VERSION.apk"
-echo "built: $ROOT/out/dsha-island-$VERSION.apk"
-sha256sum "$ROOT/out/dsha-island-$VERSION.apk" || true
-ls -lh "$ROOT/out/dsha-island-$VERSION.apk"
+mkdir -p "$ROOT/out/current"
+cp "$BUILD/dsha-island.apk" "$ROOT/out/current/dsha-island-$VERSION.apk"
+echo "built: $ROOT/out/current/dsha-island-$VERSION.apk"
+sha256sum "$ROOT/out/current/dsha-island-$VERSION.apk" || true
+ls -lh "$ROOT/out/current/dsha-island-$VERSION.apk"
