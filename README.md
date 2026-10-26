@@ -407,4 +407,5 @@ Copyright (C) 2026 Ralsei1337 and DSHA Island contributors.
 - 再分发修改版时，必须以 GPL-3.0-only 提供完整对应源码，并保留版权与许可声明；
 - 不提供任何担保；
 - **v0.4.1 及更早的 Release 仍按当时的 MIT 许可分发**；从本提交之后的新版本为 GPL-3.0-only；
-- 第三方依赖（如 `libxposed-api`）保持各自许可证，不因本仓库的 GPL 而改变。
+- 第三方依赖（如 `libxposed-api`）保持各自许可证，不因本仓库的 GPL 而改变；
+- 对应源码：本仓库 `main` 及对应版本 tag。
