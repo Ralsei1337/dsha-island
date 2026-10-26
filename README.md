@@ -13,7 +13,7 @@
 
 
 > 独立的 HyperOS 4 超级岛适配模块，**不修改 DSHA、不依赖 WorkIsland、不读取通知内容以外的数据**。
-> 状态：v0.1.3 MVP / Lite 0.1.1（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
+> 状态：v0.1.4 dev / Lite 0.1.2（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
 
 ---
 
@@ -278,12 +278,26 @@ DSHA 没有任何文件/签名/数据被修改，回滚后通知恢复原样。
 
 ### 安装
 
-1. 安装 `out/dsha-island-lite-0.1.1.apk`；
+1. 安装 `out/dsha-island-lite-0.1.2.apk`；
 2. 打开 App → 允许通知 → 点「启动岛服务」；
-3. 在 DSHA 插件页安装 `out/dsh-island-lite-0.1.1.tar.gz`，重启一次 DSH/Web；
+3. 在 DSHA 插件页安装 `out/dsh-island-lite-0.1.2.tar.gz`，重启一次 DSH/Web；
 4. 回桌面跑一个任务，岛上应出现 `DSHA 图标 + 动作 + 内容`。
 
-### 显示规则（Lite 0.1.1）
+### root 路线显示路径（0.1.4）
+
+root 模块自己只能读到 DSHA 通知里的「阶段 + 总秒数」。要显示路径/命令，把 Lite 当**状态桥**：
+
+1. 安装 Lite 0.1.2；
+2. 打开 Lite → 点「切换 root 桥接模式」→ 再点「启动岛服务」；
+3. 此时 Lite 只发静默 `dsha_island_bridge` 通知，不自己上岛；
+4. LSPosed 模块从这条通知里读 `state/text/startedAt`，官方大岛显示：
+   - A 区：`写入` + `/root/x.java`
+   - B 区：`12s`（当前动作耗时，不是整轮总时长）
+   - 卡片：`DSHA` + `/root/x.java`；停止按钮固定「停止」
+
+没有开桥接时，root 模块退回「阶段 + 总秒数」。
+
+### 显示规则（Lite 0.1.2）
 
 | 事件 | 岛上短文本示例 |
 |---|---|
@@ -317,6 +331,8 @@ dumpsys deviceidle whitelist +io.github.dsha.island.lite
 
 ## 13. 变更记录
 
+- **0.1.4**：修复「思考中/耗时」在岛上、卡片、按钮里重复；新增 root 桥接读取插件详情；通知原标题/正文改为 `DSHA` / `任务进行中`，不再叠字。
+- **Lite 0.1.2**：新增 root 桥接模式（静默 `dsha_island_bridge`，供 LSPosed 读取动作/路径/动作耗时）。
 - **Lite 0.1.1**：短文本改为「动作 + 内容」（写入接路径、执行接命令、清单接进度）；活动状态 1 Hz 刷新耗时。
 - **Lite 0.1.0**：免 root 伴生 App + `dsh-island-lite` 插件；promoted 胶囊、清单进度、8 秒收工；端口 8798。
 - **0.1.3**：增加 `FLAG_FOREGROUND_SERVICE` / ID 1001 过滤，彻底阻止「DSHA 运行中」前台服务通知上岛；诊断日志带频道/id/flags。

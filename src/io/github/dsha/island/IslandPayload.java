@@ -7,7 +7,12 @@ import android.os.Bundle;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/** Builds the official HyperOS island payload (param_v2) from a coarse phase. */
+/**
+ * Builds param_v2 with no duplicated phase/time:
+ *   big A: action + detail (or time when no detail)
+ *   big B: time only when detail is present
+ *   focus card: DSHA + detail, no subTitle
+ */
 final class IslandPayload {
     static final String PIC = "miui.focus.pic_dsha";
     static final String PIC_STOP = "miui.focus.pic_stop";
@@ -18,21 +23,19 @@ final class IslandPayload {
 
     static final class Model {
         final String shortText;
-        final String bigTitle;
-        final String bigContent;
-        final String bigRight;
-        final String baseContent;
+        final String action;
+        final String detail;
+        final String seconds;
         final int timeoutSeconds;
         final int property;
         final boolean firstFloat;
 
-        Model(String shortText, String bigTitle, String bigContent, String bigRight,
-              String baseContent, int timeoutSeconds, int property, boolean firstFloat) {
-            this.shortText = shortText;
-            this.bigTitle = bigTitle;
-            this.bigContent = bigContent;
-            this.bigRight = bigRight;
-            this.baseContent = baseContent;
+        Model(String action, String detail, String seconds,
+              int timeoutSeconds, int property, boolean firstFloat) {
+            this.action = action == null ? "" : action;
+            this.detail = detail == null ? "" : detail;
+            this.seconds = seconds == null ? "" : seconds;
+            this.shortText = text(this.action, this.detail);
             this.timeoutSeconds = timeoutSeconds;
             this.property = property;
             this.firstFloat = firstFloat;
@@ -42,38 +45,18 @@ final class IslandPayload {
     private IslandPayload() {}
 
     static Model model(Phase.Kind kind, String seconds) {
-        String sec = seconds == null ? "" : seconds.trim();
-        String dur = formatDuration(sec);
-        switch (kind) {
-            case WAITING:
-                return new Model("等你确认", "等你确认", "", "打开应用处理",
-                        "有任务在等你", 3600, 2, true);
-            case TOOL:
-                return new Model(join("执行中", sec), "执行中", sec, "正在执行工具",
-                        "正在执行工具", 3600, 1, false);
-            case REPLY:
-                return new Model(join("思考中", sec), "思考中", sec, "正在生成回复",
-                        "正在生成回复", 3600, 1, false);
-            case STOPPING:
-                return new Model("正在停止", "正在停止", sec, "等待结束",
-                        "已请求停止", 3600, 1, false);
-            case DONE_OK:
-                return new Model("任务完成", "任务完成", dur, "查看结果",
-                        "任务完成" + (dur.isEmpty() ? "" : " · " + dur), 8, 1, false);
-            case DONE_STOP:
-                return new Model("已停止", "已停止", dur, "查看结果",
-                        "任务已停止" + (dur.isEmpty() ? "" : " · " + dur), 8, 1, false);
-            case DONE_LIMIT:
-                return new Model("已达上限", "已达上限", dur, "查看结果",
-                        "已达到输出上限", 8, 1, false);
-            case ATTENTION:
-                return new Model("需要处理", "需要处理", "", "打开应用",
-                        "任务需要处理", 8, 2, true);
-            case RUNNING:
-            default:
-                return new Model(join("DSHA 运行中", sec), "运行中", sec, "DSHA",
-                        "DSHA 正在后台运行", 3600, 1, false);
-        }
+        String sec = formatDuration(seconds);
+        String action = actionFor(kind);
+        int timeout = Phase.terminal(kind) ? 8 : 3600;
+        int property = kind == Phase.Kind.WAITING || kind == Phase.Kind.ATTENTION ? 2 : 1;
+        boolean firstFloat = kind == Phase.Kind.WAITING || kind == Phase.Kind.ATTENTION;
+        return new Model(action, "", sec, timeout, property, firstFloat);
+    }
+
+    /** Bridge state from the Lite app: action + path/command + current-action seconds. */
+    static Model custom(String action, String detail, String seconds, boolean terminal) {
+        String dur = formatDuration(seconds);
+        return new Model(action, cut(detail, 24), dur, terminal ? 8 : 3600, 1, false);
     }
 
     static String json(Model m, Notification.Action stop, Notification.Action open) throws Exception {
@@ -83,9 +66,9 @@ final class IslandPayload {
         param.put("updatable", true);
         param.put("enableFloat", false);
         param.put("islandFirstFloat", m.firstFloat);
-        param.put("ticker", m.shortText);
+        param.put("ticker", "DSHA");
         param.put("tickerPic", PIC);
-        param.put("aodTitle", "DSHA " + m.shortText);
+        param.put("aodTitle", "DSHA");
 
         JSONObject island = new JSONObject();
         island.put("islandProperty", m.property);
@@ -97,16 +80,20 @@ final class IslandPayload {
         left.put("type", 1);
         left.put("picInfo", pic(PIC));
         JSONObject leftText = new JSONObject();
-        leftText.put("title", m.bigTitle);
-        if (!m.bigContent.isEmpty()) leftText.put("content", m.bigContent);
+        leftText.put("title", m.action);
+        String leftContent = m.detail.isEmpty() ? m.seconds : m.detail;
+        if (!leftContent.isEmpty()) leftText.put("content", leftContent);
         leftText.put("showHighlightColor", false);
         left.put("textInfo", leftText);
         big.put("imageTextInfoLeft", left);
 
-        JSONObject right = new JSONObject();
-        right.put("title", m.bigRight);
-        right.put("showHighlightColor", false);
-        big.put("textInfo", right);
+        // B area only carries the time when A already carries the detail.
+        if (!m.detail.isEmpty() && !m.seconds.isEmpty()) {
+            JSONObject right = new JSONObject();
+            right.put("title", m.seconds);
+            right.put("showHighlightColor", false);
+            big.put("textInfo", right);
+        }
         island.put("bigIslandArea", big);
 
         JSONObject small = new JSONObject();
@@ -117,8 +104,7 @@ final class IslandPayload {
         JSONObject base = new JSONObject();
         base.put("type", 2);
         base.put("title", "DSHA");
-        base.put("subTitle", m.shortText);
-        base.put("content", m.baseContent);
+        base.put("content", m.detail.isEmpty() ? "任务进行中" : m.detail);
         param.put("baseInfo", base);
 
         JSONArray actions = new JSONArray();
@@ -137,8 +123,8 @@ final class IslandPayload {
 
             JSONObject hint = new JSONObject();
             hint.put("type", 2);
-            hint.put("title", m.shortText);
-            hint.put("content", m.bigTitle);
+            hint.put("title", title);
+            hint.put("content", "当前任务");
             hint.put("actionInfo", actionInfo);
             param.put("hintInfo", hint);
         }
@@ -162,6 +148,37 @@ final class IslandPayload {
         return bundle;
     }
 
+    private static String actionFor(Phase.Kind kind) {
+        switch (kind) {
+            case WAITING:
+                return "等你确认";
+            case TOOL:
+                return "执行";
+            case REPLY:
+                return "思考中";
+            case STOPPING:
+                return "正在停止";
+            case DONE_OK:
+                return "任务完成";
+            case DONE_STOP:
+                return "已停止";
+            case DONE_LIMIT:
+                return "已达上限";
+            case ATTENTION:
+                return "需要处理";
+            case RUNNING:
+            default:
+                return "运行中";
+        }
+    }
+
+    private static String text(String action, String detail) {
+        if (action.isEmpty()) return cut(detail, 28);
+        if (detail.isEmpty()) return action;
+        String out = action + " " + detail;
+        return cut(out, 28);
+    }
+
     private static JSONObject pic(String key) throws Exception {
         return new JSONObject().put("type", 1).put("pic", key);
     }
@@ -175,18 +192,19 @@ final class IslandPayload {
                 .put("type", 0);
     }
 
-    private static String join(String prefix, String seconds) {
-        return seconds == null || seconds.isEmpty() ? prefix : prefix + " " + seconds + "s";
-    }
-
     private static String formatDuration(String seconds) {
         if (seconds == null || seconds.isEmpty()) return "";
         try {
-            int total = Integer.parseInt(seconds);
+            int total = Integer.parseInt(seconds.trim());
             if (total < 60) return total + "s";
             return (total / 60) + "分" + (total % 60) + "秒";
         } catch (NumberFormatException ignored) {
             return "";
         }
+    }
+
+    private static String cut(String value, int max) {
+        if (value == null) return "";
+        return value.length() <= max ? value : value.substring(0, max - 1) + "…";
     }
 }

@@ -38,7 +38,7 @@ function sessionKey(session) {
 function bucket(key) {
   let b = buckets.get(key)
   if (!b) {
-    b = { last: '', lastAt: 0, todoDone: 0, todoTotal: 0, turnStartedAt: 0, timer: undefined }
+    b = { last: '', lastAt: 0, lastState: '', todoDone: 0, todoTotal: 0, turnStartedAt: 0, timer: undefined }
     buckets.set(key, b)
   }
   return b
@@ -84,6 +84,7 @@ function sendState(b, state, text) {
   const fire = () => {
     b.last = signature
     b.lastAt = Date.now()
+    b.lastState = state
     void push('/state', { state, text, todoDone: b.todoDone, todoTotal: b.todoTotal })
   }
   if (signature === b.last && now - b.lastAt < 1200) return
@@ -108,6 +109,22 @@ function onEvent(session, event) {
     return
   }
 
+  if (type === 'assistant/chunk') {
+    if (b.lastState !== 'thinking') {
+      b.lastState = 'thinking'
+      b.last = `thinking|生成中|${b.todoDone}/${b.todoTotal}`
+      b.lastAt = Date.now()
+      if (b.timer) { clearTimeout(b.timer); b.timer = undefined }
+      void push('/state', {
+        state: 'thinking',
+        text: '生成中',
+        todoDone: b.todoDone,
+        todoTotal: b.todoTotal,
+      })
+    }
+    return
+  }
+
   if (type === 'todo/write') {
     const todos = Array.isArray(data?.todos) ? data.todos : []
     if (todos.length > 0) {
@@ -120,6 +137,7 @@ function onEvent(session, event) {
       if (signature !== b.last) {
         b.last = signature
         b.lastAt = Date.now()
+        b.lastState = 'todo'
         if (b.timer) { clearTimeout(b.timer); b.timer = undefined }
         void push('/state', {
           state: 'todo',
@@ -143,6 +161,7 @@ function onEvent(session, event) {
     if (signature !== b.last) {
       b.last = signature
       b.lastAt = now
+      b.lastState = state
       if (b.timer) { clearTimeout(b.timer); b.timer = undefined }
       void push('/state', {
         state,

@@ -28,6 +28,8 @@ import io.github.libxposed.api.XposedModuleInterface;
 public final class DshaIslandModule extends XposedModule {
     private static final String TAG = "DshaIsland";
     private static final String DSHA = "dsh.android.client";
+    private static final String LITE = "io.github.dsha.island.lite";
+    private static final String BRIDGE_CHANNEL = "dsha_island_bridge";
     private static final long THREAD_ARM_MS = 1_500L;
     private static final long GLOBAL_ARM_MS = 2_000L;
 
@@ -41,6 +43,11 @@ public final class DshaIslandModule extends XposedModule {
     private static final ThreadLocal<Long> THREAD_ARMED = new ThreadLocal<>();
     private volatile long armedAt = 0L;
     private volatile String lastEnriched = "";
+
+    private volatile String bridgeState = "";
+    private volatile String bridgeText = "";
+    private volatile long bridgeStartedAt = 0L;
+    private volatile long bridgeAt = 0L;
 
     @Override
     public void onPackageLoaded(XposedModuleInterface.PackageLoadedParam param) {
@@ -66,7 +73,10 @@ public final class DshaIslandModule extends XposedModule {
     private void install(ClassLoader cl) {
         if (cl == null) return;
         if (!pipelineLoaders.contains(cl) && hookPipeline(cl)) pipelineLoaders.add(cl);
-        if (factoryLoaders.add(cl)) hookPluginFactory(cl);
+        if (factoryLoaders.add(cl)) {
+            hookPluginFactory(cl);
+            hookBridgeListener(cl);
+        }
         if (!permissionLoaders.contains(cl) && hookPermissions(cl)) permissionLoaders.add(cl);
     }
 
@@ -87,7 +97,13 @@ public final class DshaIslandModule extends XposedModule {
                 Object arg = args.isEmpty() ? null : args.get(0);
                 if (arg instanceof StatusBarNotification) {
                     StatusBarNotification sbn = (StatusBarNotification) arg;
-                    if (DSHA.equals(sbn.getPackageName())) {
+                    if (LITE.equals(sbn.getPackageName())) {
+                        try {
+                            captureBridge(sbn);
+                        } catch (Throwable t) {
+                            log(Log.ERROR, TAG, "bridge capture failed", t);
+                        }
+                    } else if (DSHA.equals(sbn.getPackageName())) {
                         armedAt = SystemClock.elapsedRealtime();
                         try {
                             enrich(sbn);
@@ -132,6 +148,33 @@ public final class DshaIslandModule extends XposedModule {
         }
     }
 
+    private void hookBridgeListener(ClassLoader cl) {
+        try {
+            Class<?> listener = Class.forName(
+                    "com.android.systemui.statusbar.notification.MiuiNotificationListener", false, cl);
+            for (Method m : listener.getDeclaredMethods()) {
+                if (!"onNotificationPosted".equals(m.getName())) continue;
+                hook(m).setExceptionMode(XposedInterface.ExceptionMode.PROTECTIVE).intercept(chain -> {
+                    List<Object> args = chain.getArgs();
+                    Object arg = args.isEmpty() ? null : args.get(0);
+                    if (arg instanceof StatusBarNotification) {
+                        StatusBarNotification sbn = (StatusBarNotification) arg;
+                        if (LITE.equals(sbn.getPackageName())) {
+                            try {
+                                captureBridge(sbn);
+                            } catch (Throwable t) {
+                                log(Log.ERROR, TAG, "bridge listener capture failed", t);
+                            }
+                        }
+                    }
+                    return chain.proceed();
+                });
+            }
+        } catch (Throwable ignored) {
+            // Fallback: the generateInnerNotifBean path still captures rendered notifications.
+        }
+    }
+
     private boolean hookPermission(ClassLoader cl, String className, String... names) {
         boolean any = false;
         try {
@@ -169,7 +212,15 @@ public final class DshaIslandModule extends XposedModule {
         CharSequence text = extras.getCharSequence(Notification.EXTRA_TEXT);
         Phase.Kind kind = Phase.parse(text);
         String seconds = Phase.seconds(text);
-        IslandPayload.Model model = IslandPayload.model(kind, seconds);
+        IslandPayload.Model model;
+        if (bridgeFresh()) {
+            String action = bridgeAction(bridgeState);
+            String detail = bridgeDetail();
+            String dur = bridgeSeconds(seconds);
+            model = IslandPayload.custom(action, detail, dur, "done".equals(bridgeState));
+        } else {
+            model = IslandPayload.model(kind, seconds);
+        }
 
         Notification.Action stop = findAction(n, "停止", "Stop");
         if (stop == null && (n.flags & Notification.FLAG_ONGOING_EVENT) != 0
@@ -190,6 +241,10 @@ public final class DshaIslandModule extends XposedModule {
             json = null;
         }
 
+        // The focus card may render the original title/text as well as baseInfo.
+        // Replace them with detail-only text so the phase/time is not repeated.
+        extras.putCharSequence(Notification.EXTRA_TITLE, "DSHA");
+        extras.putCharSequence(Notification.EXTRA_TEXT, "任务进行中");
         extras.putBoolean(Notification.EXTRA_COLORIZED, true);
         extras.putBoolean(Notification.EXTRA_REQUEST_PROMOTED_ONGOING, true);
         extras.putString("android.shortCriticalText", model.shortText);
@@ -209,6 +264,65 @@ public final class DshaIslandModule extends XposedModule {
                     + " fgs=" + ((n.flags & Notification.FLAG_FOREGROUND_SERVICE) != 0)
                     + " stop=" + (stop != null) + " open=" + (open != null));
         }
+    }
+
+    private void captureBridge(StatusBarNotification sbn) {
+        Notification n = sbn.getNotification();
+        if (n == null) return;
+        Bundle ex = n.extras;
+        if (ex == null) return;
+        if (!BRIDGE_CHANNEL.equals(n.getChannelId())) return;
+        String state = ex.getString("dsha.state", "");
+        if (state.isEmpty()) return;
+        bridgeState = state;
+        bridgeText = ex.getString("dsha.text", "");
+        bridgeStartedAt = ex.getLong("dsha.startedAt", 0L);
+        bridgeAt = SystemClock.elapsedRealtime();
+    }
+
+    private boolean bridgeFresh() {
+        long at = bridgeAt;
+        return at != 0L && SystemClock.elapsedRealtime() - at <= 3_500L
+                && !bridgeState.isEmpty() && !"idle".equals(bridgeState);
+    }
+
+    private static String bridgeAction(String state) {
+        switch (state) {
+            case "thinking":
+                return "思考中";
+            case "reading":
+                return "读取";
+            case "writing":
+                return "写入";
+            case "searching":
+                return "搜索";
+            case "todo":
+                return "清单";
+            case "waiting":
+                return "等你确认";
+            case "error":
+                return "出错";
+            case "done":
+                return "任务完成";
+            case "running":
+            default:
+                return "执行";
+        }
+    }
+
+    private String bridgeDetail() {
+        if ("thinking".equals(bridgeState) || "waiting".equals(bridgeState)) return "";
+        return bridgeText == null ? "" : bridgeText.trim();
+    }
+
+    private String bridgeSeconds(String fallback) {
+        if ("done".equals(bridgeState)) return "";
+        long started = bridgeStartedAt;
+        if (started > 0) {
+            long seconds = Math.max(0, (SystemClock.elapsedRealtime() - started) / 1000);
+            return Long.toString(seconds);
+        }
+        return fallback;
     }
 
     private static Notification.Action findAction(Notification n, String... titles) {

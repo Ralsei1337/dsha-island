@@ -6,11 +6,13 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.util.Log;
 
@@ -33,6 +35,7 @@ import java.util.Map;
 public final class IslandService extends Service {
     private static final String TAG = "DshaIslandLite";
     static final String CHANNEL = "dsha_island_lite";
+    static final String CHANNEL_BRIDGE = "dsha_island_bridge";
     static final int ID = 3001;
     static final int PORT = 8798;
     static volatile boolean RUNNING = false;
@@ -110,6 +113,19 @@ public final class IslandService extends Service {
         channel.setDescription("DSHA 任务状态胶囊（免 root）");
         channel.setShowBadge(false);
         nm.createNotificationChannel(channel);
+
+        NotificationChannel bridge =
+                new NotificationChannel(CHANNEL_BRIDGE, "DSHA 状态桥", NotificationManager.IMPORTANCE_LOW);
+        bridge.setDescription("供 root/LSPosed 模块读取的静默状态");
+        bridge.setShowBadge(false);
+        bridge.setSound(null, null);
+        bridge.enableVibration(false);
+        nm.createNotificationChannel(bridge);
+    }
+
+    private boolean rootBridge() {
+        SharedPreferences prefs = getSharedPreferences("config", MODE_PRIVATE);
+        return prefs.getBoolean("root_bridge", false);
     }
 
     private void foreground(Notification notification) {
@@ -136,24 +152,34 @@ public final class IslandService extends Service {
             if (!"done".equals(state) && !elapsed.isEmpty()) body += " · " + elapsed;
         }
 
-        Notification.Builder builder = new Notification.Builder(this, CHANNEL)
+        boolean bridge = rootBridge();
+        Notification.Builder builder = new Notification.Builder(this, bridge ? CHANNEL_BRIDGE : CHANNEL)
                 .setSmallIcon(R.drawable.ic_lite)
-                .setContentTitle(idleState ? "DSHA Island Lite" : title)
+                .setContentTitle(bridge ? "DSHA 状态桥" : (idleState ? "DSHA Island Lite" : title))
                 .setContentText(body)
                 .setOngoing(true)
                 .setOnlyAlertOnce(true)
                 .setShowWhen(false)
                 .setContentIntent(openDsha());
 
-        if (!idleState) {
+        if (!idleState && !bridge) {
             if (Build.VERSION.SDK_INT >= 36) {
                 builder.setShortCriticalText(shortText);
                 builder.setRequestPromotedOngoing(true);
             }
-            if (total > 0) {
-                builder.setProgress(total, Math.max(0, Math.min(done, total)), false);
-            }
         }
+        if (total > 0) {
+            builder.setProgress(total, Math.max(0, Math.min(done, total)), false);
+        }
+
+        Bundle extras = new Bundle();
+        extras.putString("dsha.state", state);
+        extras.putString("dsha.text", text);
+        extras.putString("dsha.title", title);
+        extras.putLong("dsha.startedAt", actionStartedAt);
+        extras.putInt("dsha.done", done);
+        extras.putInt("dsha.total", total);
+        builder.addExtras(extras);
         return builder.build();
     }
 

@@ -3,6 +3,7 @@ package io.github.dsha.island.lite;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.ViewGroup;
@@ -49,6 +50,7 @@ public final class MainActivity extends Activity {
             updateStatus();
         }), matchWrap());
         column.addView(button("通知权限", v -> requestNotificationPermission()), matchWrap());
+        column.addView(button("切换 root 桥接模式", v -> toggleRootBridge()), matchWrap());
         column.addView(button("打开 DSHA", v -> openDsha()), matchWrap());
 
         TextView note = new TextView(this);
@@ -106,6 +108,25 @@ public final class MainActivity extends Activity {
         }
     }
 
+    private void toggleRootBridge() {
+        SharedPreferences prefs = getSharedPreferences("config", MODE_PRIVATE);
+        boolean next = !prefs.getBoolean("root_bridge", false);
+        prefs.edit().putBoolean("root_bridge", next).apply();
+        if (IslandService.RUNNING) {
+            try {
+                startForegroundService(new Intent(this, IslandService.class));
+            } catch (Throwable ignored) {
+            }
+        }
+        Toast.makeText(this, next ? "root 桥接已开：由 LSPosed 模块上岛" : "root 桥接已关：Lite 自己上岛",
+                Toast.LENGTH_LONG).show();
+        updateStatus();
+    }
+
+    private boolean rootBridge() {
+        return getSharedPreferences("config", MODE_PRIVATE).getBoolean("root_bridge", false);
+    }
+
     private void openDsha() {
         Intent launch = getPackageManager().getLaunchIntentForPackage("dsh.android.client");
         if (launch == null) {
@@ -119,6 +140,7 @@ public final class MainActivity extends Activity {
         if (status == null) return;
         status.setText("通知权限：" + (hasNotificationPermission() ? "已开" : "未开")
                 + "\n岛服务：" + (IslandService.RUNNING ? "运行中" : "未运行")
+                + "\n桥接模式：" + (rootBridge() ? "开（供 root 模块读取）" : "关（Lite 自己上岛）")
                 + "\n监听：127.0.0.1:8798");
     }
 
