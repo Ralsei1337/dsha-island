@@ -381,7 +381,7 @@ dumpsys deviceidle whitelist +io.github.dsha.island.lite
 
 完整历史、组件版本映射和版本策略见 [CHANGELOG.md](CHANGELOG.md)。
 
-- **0.4.1**：检查更新增加 GitHub Release 302 跳转兜底，API 限流/403 时仍能识别最新版本。
+- **0.4.1**：Lite 和模块设置页都支持检查更新；增加 GitHub Release 302 跳转兜底，API 限流/403 时仍能识别最新版本。
 - **0.4.0**：Lite 新增「检查更新」（点按才访问 GitHub API）和「免 root 能力报告」；新增 `docs/免root能力边界.md`，明确免 root 只能到 AOSP 胶囊/卡片，官方大岛与岛上停止仍需 root。
 - **0.3.1**：修复卡住/重复：不再因旧 `miui.focus.param` 跳过更新；通知监听器增加兜底 enrich；直读状态缓存 12s；插件状态服务跨 HMR 复用、自动重试，并带每秒心跳，失联后自动降级。
 - **0.3.0**：新增平台适配层（Xiaomi/OPPO/vivo/Huawei/Honor）；ColorOS 16 走 AOSP Live Updates；vivo/华为无公开私有接口时降级普通通知。

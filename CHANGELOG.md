@@ -8,7 +8,7 @@
 
 ### Fixed
 
-- 检查更新在 GitHub API 匿名限流/403 时会失败；增加
+- Lite 和 root 模块设置页都支持「检查更新」；API 匿名限流/403 时会失败，增加
   `github.com/.../releases/latest` 302 跳转兜底，仍能识别最新 tag。
 - 兜底路径不返回 Release 正文，但版本号和跳转链接正常。
 
