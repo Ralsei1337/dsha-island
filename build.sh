@@ -11,7 +11,7 @@ PLATFORM="$SDK/platforms/android-37.0/android.jar"
 BUILD_TOOLS="$SDK/build-tools/android-37.0"
 AAPT2="${AAPT2:-/opt/termux-tools/usr/bin/aapt2}"
 TERMUX_LIB="${TERMUX_LIB:-/opt/termux-tools/usr/lib}"
-VERSION="0.3.1"
+VERSION="0.4.0"
 
 rm -rf "$BUILD"
 mkdir -p "$BUILD/src" "$BUILD/libs" "$BUILD/classes" "$BUILD/dex" "$BUILD/apk"

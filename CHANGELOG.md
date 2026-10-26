@@ -4,6 +4,26 @@
 共用同一个版本号；修复递增 patch，功能递增 minor。历史 0.1.x 是组件各自版本，
 映射见文末。
 
+## [0.4.0] - 2026-10-27
+
+### Added
+
+- Lite 新增「检查更新」：点击时请求 GitHub `releases/latest`，显示当前/最新版本、
+  Release 说明和跳转按钮；不后台轮询、不自动下载。
+- Lite 新增「免 root 能力报告」：按 OEM、Android 版本、`canPostPromotedNotifications()`
+  显示系统能不能上 Live Updates。
+- 新增 `docs/免root能力边界.md`：记录 HyperOS 实测结论，以及 ColorOS/vivo/Huawei 的公开边界。
+
+### Changed
+
+- 三端统一版本号 `0.4.0`。
+
+### Notes
+
+- 免 root 在 HyperOS 的上限仍是 AOSP 胶囊：没有官方大岛、没有岛上停止。
+- ColorOS 16 走 AOSP Live Updates 可显示流体云卡片；OriginOS/HarmonyOS 取决于系统是否开放。
+- 官方大岛/私有原子通知/实况窗仍需 root 系统级 hook 或厂商 SDK，不在免 root 范围。
+
 ## [0.3.1] - 2026-10-27
 
 ### Fixed
@@ -129,5 +149,6 @@
 | `v0.2.0` | 0.2.0 | 0.2.0 | 0.2.0 |
 | `v0.3.0` | 0.3.0 | 0.3.0 | 0.3.0 |
 | `v0.3.1` | 0.3.1 | 0.3.1 | 0.3.1 |
+| `v0.4.0` | 0.4.0 | 0.4.0 | 0.4.0 |
 
 > `0.1.1` 模块、`0.1.4` 之前的 Release 未逐版发布；从 `0.2.0` 起不再跳号。

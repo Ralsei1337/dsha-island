@@ -64,6 +64,26 @@ final class Platform {
         }
     }
 
+    static String capabilityReport(Context context) {
+        if (!promoted(context)) {
+            return "免 root 能力：普通通知（系统未开放 Live Updates）";
+        }
+        switch (oem()) {
+            case XIAOMI:
+                return "免 root 能力：AOSP 胶囊（官方大岛/岛上停止需 root）";
+            case OPPO:
+                return "免 root 能力：流体云 Live Update 卡片";
+            case VIVO:
+                return "免 root 能力：原子通知（仅当系统实现 Live Updates）";
+            case HUAWEI:
+                return "免 root 能力：普通通知（APK 不可用实况窗）";
+            case HONOR:
+                return "免 root 能力：灵动胶囊（仅当系统实现 Live Updates）";
+            default:
+                return "免 root 能力：实时通知（仅当系统实现 Live Updates）";
+        }
+    }
+
     static String describe(Context context) {
         return Build.MANUFACTURER + " " + Build.MODEL
                 + " · Android " + Build.VERSION.RELEASE

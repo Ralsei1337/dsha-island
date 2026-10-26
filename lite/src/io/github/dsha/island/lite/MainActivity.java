@@ -2,9 +2,11 @@ package io.github.dsha.island.lite;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -13,7 +15,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-/** Minimal status/control page; no layout resources, no network permissions. */
+/** Minimal status/control page; no layout resources. */
 public final class MainActivity extends Activity {
     private static final int REQUEST_NOTIFICATIONS = 1;
     private TextView status;
@@ -50,13 +52,15 @@ public final class MainActivity extends Activity {
             updateStatus();
         }), matchWrap());
         column.addView(button("通知权限", v -> requestNotificationPermission()), matchWrap());
+        column.addView(button("检查更新", v -> checkUpdate()), matchWrap());
         column.addView(button("切换 root 桥接模式", v -> toggleRootBridge()), matchWrap());
         column.addView(button("打开 DSHA", v -> openDsha()), matchWrap());
 
         TextView note = new TextView(this);
         note.setText("\n端口：127.0.0.1:8798（仅本机）\n"
                 + "如果胶囊没出现：确认通知权限已开；省电策略设为“无限制”。\n"
-                + "这是 AOSP promoted 通道，不包含官方大岛/岛上按钮。");
+                + "这是 AOSP promoted 通道，不包含官方大岛/岛上按钮。\n"
+                + "检查更新只在你点按钮时访问 GitHub API，不后台轮询。");
         note.setTextSize(13);
         column.addView(note, matchWrap());
 
@@ -108,6 +112,48 @@ public final class MainActivity extends Activity {
         }
     }
 
+    private void checkUpdate() {
+        Toast.makeText(this, "正在检查 GitHub Release…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            UpdateChecker.Result result = UpdateChecker.check(this);
+            runOnUiThread(() -> showUpdateResult(result));
+        }, "dsha-update-check").start();
+    }
+
+    private void showUpdateResult(UpdateChecker.Result result) {
+        if (result.error != null) {
+            new AlertDialog.Builder(this)
+                    .setTitle("检查失败")
+                    .setMessage("当前：" + result.current + "\n" + result.error
+                            + "\n\n可以手动打开 Release 页面查看。")
+                    .setPositiveButton("打开 Release", (d, w) -> openRelease())
+                    .setNegativeButton("关闭", null)
+                    .show();
+            return;
+        }
+        String title = result.newer()
+                ? "发现新版本 " + result.latest
+                : "已是最新";
+        String notes = result.notes == null ? "" : result.notes.trim();
+        if (notes.length() > 1500) notes = notes.substring(0, 1500) + "…";
+        String message = "当前：" + result.current + "\n最新：" + result.latest
+                + (notes.isEmpty() ? "" : "\n\n" + notes);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setNegativeButton("关闭", null);
+        if (result.url != null && !result.url.isEmpty()) {
+            builder.setPositiveButton("打开 Release",
+                    (d, w) -> startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(result.url))));
+        }
+        builder.show();
+    }
+
+    private void openRelease() {
+        startActivity(new Intent(Intent.ACTION_VIEW,
+                Uri.parse("https://github.com/Ralsei1337/dsha-island/releases")));
+    }
+
     private void toggleRootBridge() {
         SharedPreferences prefs = getSharedPreferences("config", MODE_PRIVATE);
         boolean next = !prefs.getBoolean("root_bridge", false);
@@ -142,6 +188,7 @@ public final class MainActivity extends Activity {
                 + "\n岛服务：" + (IslandService.RUNNING ? "运行中" : "未运行")
                 + "\n桥接模式：" + (rootBridge() ? "开（供 root 模块读取）" : "关（Lite 自己上岛）")
                 + "\n" + Platform.describe(this)
+                + "\n" + Platform.capabilityReport(this)
                 + "\n监听：127.0.0.1:8798");
     }
 
