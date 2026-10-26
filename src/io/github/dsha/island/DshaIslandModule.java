@@ -217,7 +217,7 @@ public final class DshaIslandModule extends XposedModule {
             String action = bridgeAction(bridgeState);
             String detail = bridgeDetail();
             String dur = bridgeSeconds(seconds);
-            model = IslandPayload.custom(action, detail, dur, "done".equals(bridgeState));
+            model = IslandPayload.custom(action, detail, dur, seconds, "done".equals(bridgeState));
         } else {
             model = IslandPayload.model(kind, seconds);
         }

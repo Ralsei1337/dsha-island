@@ -25,16 +25,18 @@ final class IslandPayload {
         final String shortText;
         final String action;
         final String detail;
-        final String seconds;
+        final String actionSeconds;
+        final String totalSeconds;
         final int timeoutSeconds;
         final int property;
         final boolean firstFloat;
 
-        Model(String action, String detail, String seconds,
+        Model(String action, String detail, String actionSeconds, String totalSeconds,
               int timeoutSeconds, int property, boolean firstFloat) {
             this.action = action == null ? "" : action;
             this.detail = detail == null ? "" : detail;
-            this.seconds = seconds == null ? "" : seconds;
+            this.actionSeconds = actionSeconds == null ? "" : actionSeconds;
+            this.totalSeconds = totalSeconds == null ? "" : totalSeconds;
             this.shortText = text(this.action, this.detail);
             this.timeoutSeconds = timeoutSeconds;
             this.property = property;
@@ -45,18 +47,21 @@ final class IslandPayload {
     private IslandPayload() {}
 
     static Model model(Phase.Kind kind, String seconds) {
-        String sec = formatDuration(seconds);
+        String total = formatDuration(seconds);
         String action = actionFor(kind);
         int timeout = Phase.terminal(kind) ? 8 : 3600;
         int property = kind == Phase.Kind.WAITING || kind == Phase.Kind.ATTENTION ? 2 : 1;
         boolean firstFloat = kind == Phase.Kind.WAITING || kind == Phase.Kind.ATTENTION;
-        return new Model(action, "", sec, timeout, property, firstFloat);
+        // Island has no time; the expanded card shows the total.
+        return new Model(action, "", "", total, timeout, property, firstFloat);
     }
 
-    /** Bridge state from the Lite app: action + path/command + current-action seconds. */
-    static Model custom(String action, String detail, String seconds, boolean terminal) {
-        String dur = formatDuration(seconds);
-        return new Model(action, cut(detail, 24), dur, terminal ? 8 : 3600, 1, false);
+    /** Bridge state: action + path/command + current-action seconds + total turn seconds. */
+    static Model custom(String action, String detail, String actionSeconds,
+                        String totalSeconds, boolean terminal) {
+        return new Model(action, cut(detail, 24),
+                formatDuration(actionSeconds), formatDuration(totalSeconds),
+                terminal ? 8 : 3600, 1, false);
     }
 
     static String json(Model m, Notification.Action stop, Notification.Action open) throws Exception {
@@ -81,16 +86,15 @@ final class IslandPayload {
         left.put("picInfo", pic(PIC));
         JSONObject leftText = new JSONObject();
         leftText.put("title", m.action);
-        String leftContent = m.detail.isEmpty() ? m.seconds : m.detail;
-        if (!leftContent.isEmpty()) leftText.put("content", leftContent);
+        if (!m.detail.isEmpty()) leftText.put("content", m.detail);
         leftText.put("showHighlightColor", false);
         left.put("textInfo", leftText);
         big.put("imageTextInfoLeft", left);
 
-        // B area only carries the time when A already carries the detail.
-        if (!m.detail.isEmpty() && !m.seconds.isEmpty()) {
+        // B area carries the current-action elapsed time only.
+        if (!m.actionSeconds.isEmpty()) {
             JSONObject right = new JSONObject();
-            right.put("title", m.seconds);
+            right.put("title", m.actionSeconds);
             right.put("showHighlightColor", false);
             big.put("textInfo", right);
         }
@@ -104,6 +108,9 @@ final class IslandPayload {
         JSONObject base = new JSONObject();
         base.put("type", 2);
         base.put("title", "DSHA");
+        if (!m.totalSeconds.isEmpty()) {
+            base.put("subTitle", "任务总耗时 " + m.totalSeconds);
+        }
         base.put("content", m.detail.isEmpty() ? "任务进行中" : m.detail);
         param.put("baseInfo", base);
 
