@@ -109,7 +109,7 @@ public final class IslandService extends Service {
         NotificationManager nm = getSystemService(NotificationManager.class);
         if (nm == null) return;
         NotificationChannel channel =
-                new NotificationChannel(CHANNEL, "DSHA 岛服务", NotificationManager.IMPORTANCE_LOW);
+                new NotificationChannel(CHANNEL, Platform.channelName(this), NotificationManager.IMPORTANCE_LOW);
         channel.setDescription("DSHA 任务状态胶囊（免 root）");
         channel.setShowBadge(false);
         nm.createNotificationChannel(channel);
@@ -153,6 +153,7 @@ public final class IslandService extends Service {
         }
 
         boolean bridge = rootBridge();
+        boolean promoted = Platform.promoted(this);
         Notification.Builder builder = new Notification.Builder(this, bridge ? CHANNEL_BRIDGE : CHANNEL)
                 .setSmallIcon(R.drawable.ic_lite)
                 .setContentTitle(bridge ? "DSHA 状态桥" : (idleState ? "DSHA Island Lite" : title))
@@ -162,11 +163,12 @@ public final class IslandService extends Service {
                 .setShowWhen(false)
                 .setContentIntent(openDsha());
 
-        if (!idleState && !bridge) {
+        if (!idleState && !bridge && promoted) {
             if (Build.VERSION.SDK_INT >= 36) {
                 builder.setShortCriticalText(shortText);
                 builder.setRequestPromotedOngoing(true);
             }
+            builder.setColorized(true);
         }
         if (total > 0) {
             builder.setProgress(total, Math.max(0, Math.min(done, total)), false);
@@ -264,7 +266,7 @@ public final class IslandService extends Service {
                 socket.setReuseAddress(true);
                 socket.bind(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), PORT));
                 server = socket;
-                Log.i(TAG, "listening on 127.0.0.1:" + PORT);
+                Log.i(TAG, Platform.describe(this) + " · listening on 127.0.0.1:" + PORT);
                 while (accepting) {
                     try {
                         handle(socket.accept());

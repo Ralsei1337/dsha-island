@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.graphics.drawable.Icon;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.service.notification.StatusBarNotification;
@@ -20,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -66,6 +68,10 @@ public final class DshaIslandModule extends XposedModule {
     @Override
     public void onPackageLoaded(XposedModuleInterface.PackageLoadedParam param) {
         if (!"com.android.systemui".equals(param.getPackageName())) return;
+        if (!isXiaomi()) {
+            log(Log.INFO, TAG, "non-Xiaomi device, module inactive; use Lite instead");
+            return;
+        }
         log(Log.INFO, TAG, "SystemUI loaded, installing DSHA island hooks");
         startPoller();
         try {
@@ -78,6 +84,7 @@ public final class DshaIslandModule extends XposedModule {
     @Override
     public void onPackageReady(XposedModuleInterface.PackageReadyParam param) {
         if (!"com.android.systemui".equals(param.getPackageName())) return;
+        if (!isXiaomi()) return;
         try {
             install(param.getClassLoader());
         } catch (Throwable t) {
@@ -292,6 +299,11 @@ public final class DshaIslandModule extends XposedModule {
                     + " grp=" + ((n.flags & Notification.FLAG_GROUP_SUMMARY) != 0)
                     + " stop=" + (stop != null) + " open=" + (open != null));
         }
+    }
+
+    private static boolean isXiaomi() {
+        String name = (Build.MANUFACTURER + " " + Build.BRAND).toLowerCase(Locale.ROOT);
+        return name.contains("xiaomi") || name.contains("redmi") || name.contains("poco");
     }
 
     private void startPoller() {

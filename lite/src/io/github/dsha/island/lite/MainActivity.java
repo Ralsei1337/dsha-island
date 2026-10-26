@@ -33,7 +33,7 @@ public final class MainActivity extends Activity {
         column.addView(title, matchWrap());
 
         TextView hint = new TextView(this);
-        hint.setText("免 root 的超级岛胶囊：只显示 DSHA 图标 + 一行状态。\n"
+        hint.setText("免 root 的实时通知胶囊：HyperOS 超级岛 / ColorOS 流体云 / OriginOS 原子通知 / HarmonyOS 实况窗，具体取决于系统是否支持 Android 16 Live Updates。\n"
                 + "需要配合 DSHA 插件 dsh-island-lite 使用。");
         hint.setTextSize(14);
         hint.setPadding(0, pad / 2, 0, pad / 2);
@@ -141,6 +141,7 @@ public final class MainActivity extends Activity {
         status.setText("通知权限：" + (hasNotificationPermission() ? "已开" : "未开")
                 + "\n岛服务：" + (IslandService.RUNNING ? "运行中" : "未运行")
                 + "\n桥接模式：" + (rootBridge() ? "开（供 root 模块读取）" : "关（Lite 自己上岛）")
+                + "\n" + Platform.describe(this)
                 + "\n监听：127.0.0.1:8798");
     }
 

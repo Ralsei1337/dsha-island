@@ -1,6 +1,6 @@
 {
   "name": "dsh-island-lite",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Push DeepSeek Harness run state to DSHA Island Lite (HyperOS capsule, no root)",
   "type": "module",
   "main": "lib/index.js",

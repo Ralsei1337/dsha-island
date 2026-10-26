@@ -2,18 +2,18 @@
 
 ## 下载
 
-[v0.2.0 Release](https://github.com/Ralsei1337/dsha-island/releases/tag/v0.2.0)
+[v0.3.0 Release](https://github.com/Ralsei1337/dsha-island/releases/tag/v0.3.0)
 
 | 文件 | 用途 |
 |---|---|
-| `dsha-island-0.2.0.apk` | root + LSPosed，完整大岛 |
-| `dsha-island-lite-0.2.0.apk` | 免 root 伴生 App |
-| `dsh-island-lite-0.2.0.tar.gz` | DSHA 插件（root 直读 8797 / Lite 推送） |
+| `dsha-island-0.3.0.apk` | root + LSPosed，完整大岛 |
+| `dsha-island-lite-0.3.0.apk` | 免 root 伴生 App |
+| `dsh-island-lite-0.3.0.tar.gz` | DSHA 插件（root 直读 8797 / Lite 推送） |
 | `SHA256SUMS.txt` | 校验和 |
 
 
 > 独立的 HyperOS 4 超级岛适配模块，**不修改 DSHA、不依赖 WorkIsland、不读取通知内容以外的数据**。
-> 状态：v0.2.0（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
+> 状态：v0.3.0（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
 
 ---
 
@@ -38,6 +38,21 @@
 | **DSHA Island Lite** | `lite/` + `plugin/` | 否 | AOSP 胶囊：图标 + 一行文字 | 免 root、可分发 |
 
 两者可以共存，但**同一轮任务建议只启用一个**，否则两条通知会抢同一个岛位。
+
+## 1.2 平台支持
+
+| 系统 | 走哪条路 | 岛形态 | 状态 |
+|---|---|---|---|
+| Xiaomi HyperOS 3/4 | root 模块 / Lite | 超级岛：官方大岛或胶囊 | 真机已验证 |
+| OPPO / 一加 / realme ColorOS 16（Android 16） | Lite promoted | 流体云 / Live Updates | 公开 API 兼容；本机未测试 |
+| vivo / iQOO OriginOS（Android 16） | Lite promoted | 原子通知（若系统实现 Live Updates） | 尽力适配；私有原子通知 SDK 未使用 |
+| Huawei HarmonyOS 4（Android 底） | Lite 普通通知 | 无（Android APK 不能用实况窗） | 仅通知栏 |
+| Huawei HarmonyOS NEXT | 不支持 | — | 不能安装 APK |
+| Honor MagicOS | Lite promoted | 灵动胶囊（若系统实现） | 尽力适配；未测试 |
+| 其他 Android 16 | Lite promoted | 实时通知 | 尽力适配 |
+
+- root LSPosed 模块只对小米/HyperOS 生效；其他品牌安装后自动 inactive。
+- OPPO/vivo/华为的厂商私有 SDK（流体云 UPK、原子通知、实况窗）需要开发者资质/白名单，本项目不包含，也不伪造。
 
 ## 2. 它不做什么
 
@@ -102,7 +117,7 @@ dsha-island/
 │   ├── IslandPayload.java              # param_v2 / pics / actions
 │   ├── Phase.java                      # 通知文案 -> 阶段
 │   └── SettingsActivity.java           # 说明页（无权限、无网络）
-└── out/current/dsha-island-0.2.0.apk    # 构建产物
+└── out/current/dsha-island-0.3.0.apk    # 构建产物
 ```
 
 ---
@@ -114,7 +129,7 @@ dsha-island/
 ```bash
 cd dsha-island
 ./build.sh
-# 产物：out/current/dsha-island-0.2.0.apk
+# 产物：out/current/dsha-island-0.3.0.apk
 ```
 
 依赖：
@@ -135,7 +150,7 @@ cd dsha-island
 
 > 本机设备策略禁止 `adb-shell pm install`，所以安装必须手动走系统安装器。
 
-1. 把 `out/current/dsha-island-0.2.0.apk` 传到手机（或从 `Download/DSHA/DSHA-Island/01-当前` 打开）。
+1. 把 `out/current/dsha-island-0.3.0.apk` 传到手机（或从 `Download/DSHA/DSHA-Island/01-当前` 打开）。
 2. 文件管理器点 APK → 继续安装（HyperOS 会提示“文件管理正尝试安装应用”）。
 3. 打开 **LSPosed 管理器** → 模块 → 勾选 **DSHA Island**。
 4. 作用域只勾 **`com.android.systemui`**（不要勾 DSHA，模块不进入 DSHA 进程）。
@@ -278,9 +293,9 @@ DSHA 没有任何文件/签名/数据被修改，回滚后通知恢复原样。
 
 ### 安装
 
-1. 安装 `out/current/dsha-island-lite-0.2.0.apk`；
+1. 安装 `out/current/dsha-island-lite-0.3.0.apk`；
 2. 打开 App → 允许通知 → 点「启动岛服务」；
-3. 在 DSHA 插件页安装 `out/current/dsh-island-lite-0.2.0.tar.gz`，重启一次 DSH/Web；
+3. 在 DSHA 插件页安装 `out/current/dsh-island-lite-0.3.0.tar.gz`，重启一次 DSH/Web；
 4. 回桌面跑一个任务，岛上应出现 `DSHA 图标 + 动作 + 内容`。
 
 ### root 路线显示路径（0.1.4）
@@ -300,7 +315,7 @@ DSHA 没有任何文件/签名/数据被修改，回滚后通知恢复原样。
 
 > 8797 只绑定 `127.0.0.1`；同机其他 App 理论上可以读这条状态（含路径/命令），仅供个人设备使用。
 
-### 显示规则（Lite 0.2.0）
+### 显示规则（Lite 0.3.0）
 
 | 事件 | 岛上短文本示例 |
 |---|---|
@@ -336,6 +351,7 @@ dumpsys deviceidle whitelist +io.github.dsha.island.lite
 
 完整历史、组件版本映射和版本策略见 [CHANGELOG.md](CHANGELOG.md)。
 
+- **0.3.0**：新增平台适配层（Xiaomi/OPPO/vivo/Huawei/Honor）；ColorOS 16 走 AOSP Live Updates；vivo/华为无公开私有接口时降级普通通知。
 - **0.2.0**：模块 / Lite / 插件 / Release 统一版本号；root 直读插件 8797；活动摘要不上岛、终态摘要保留完成通知；停止按钮去重；展开卡片显示任务总耗时。
 ## 14. 设计来源
 

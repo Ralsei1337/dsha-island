@@ -4,6 +4,26 @@
 共用同一个版本号；修复递增 patch，功能递增 minor。历史 0.1.x 是组件各自版本，
 映射见文末。
 
+## [0.3.0] - 2026-10-27
+
+### Added
+
+- 平台适配层：自动识别 Xiaomi / OPPO(一加/realme) / vivo(iQOO) / Huawei / Honor / 其他。
+- ColorOS 16 走 AOSP Live Updates（promoted ongoing + shortCriticalText），对应「流体云」。
+- vivo / Huawei / Honor 在系统实现 Android 16 Live Updates 时尽力上岛；否则普通通知降级。
+- Lite 通知频道按平台命名（超级岛 / 流体云 / 原子通知 / 实况窗）。
+- root 模块增加 Xiaomi 设备 guard，其他品牌自动 inactive。
+
+### Changed
+
+- 三端统一版本号 `0.3.0`。
+- Lite 增加 `setColorized(true)`，满足 AOSP Live Updates 的特征要求。
+
+### Notes
+
+- 华为 HarmonyOS 4 的 Android APK 无法使用实况窗；HarmonyOS NEXT 不能安装 APK。
+- vivo 原子通知、OPPO 流体云 UPK、华为实况窗的私有 SDK 需要厂商资质/白名单，本版本未接入。
+
 ## [0.2.0] - 2026-10-27
 
 ### Changed
@@ -92,5 +112,6 @@
 | `v0.1.3` | 0.1.3 | 0.1.1 | 0.1.1 |
 | `v0.1.7` | 0.1.7 | 0.1.2 | 0.1.2 |
 | `v0.2.0` | 0.2.0 | 0.2.0 | 0.2.0 |
+| `v0.3.0` | 0.3.0 | 0.3.0 | 0.3.0 |
 
 > `0.1.1` 模块、`0.1.4` 之前的 Release 未逐版发布；从 `0.2.0` 起不再跳号。
