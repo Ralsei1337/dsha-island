@@ -2,18 +2,18 @@
 
 ## 下载
 
-[v0.1.7 Release](https://github.com/Ralsei1337/dsha-island/releases/tag/v0.1.7)
+[v0.2.0 Release](https://github.com/Ralsei1337/dsha-island/releases/tag/v0.2.0)
 
 | 文件 | 用途 |
 |---|---|
-| `dsha-island-0.1.7.apk` | root + LSPosed，完整大岛 |
-| `dsha-island-lite-0.1.2.apk` | 免 root 伴生 App |
-| `dsh-island-lite-0.1.2.tar.gz` | DSHA 插件（root 直读 8797 / Lite 推送） |
+| `dsha-island-0.2.0.apk` | root + LSPosed，完整大岛 |
+| `dsha-island-lite-0.2.0.apk` | 免 root 伴生 App |
+| `dsh-island-lite-0.2.0.tar.gz` | DSHA 插件（root 直读 8797 / Lite 推送） |
 | `SHA256SUMS.txt` | 校验和 |
 
 
 > 独立的 HyperOS 4 超级岛适配模块，**不修改 DSHA、不依赖 WorkIsland、不读取通知内容以外的数据**。
-> 状态：v0.1.7 / Lite 0.1.2（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
+> 状态：v0.2.0（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
 
 ---
 
@@ -102,7 +102,7 @@ dsha-island/
 │   ├── IslandPayload.java              # param_v2 / pics / actions
 │   ├── Phase.java                      # 通知文案 -> 阶段
 │   └── SettingsActivity.java           # 说明页（无权限、无网络）
-└── out/current/dsha-island-0.1.7.apk    # 构建产物
+└── out/current/dsha-island-0.2.0.apk    # 构建产物
 ```
 
 ---
@@ -114,7 +114,7 @@ dsha-island/
 ```bash
 cd dsha-island
 ./build.sh
-# 产物：out/current/dsha-island-0.1.7.apk
+# 产物：out/current/dsha-island-0.2.0.apk
 ```
 
 依赖：
@@ -135,7 +135,7 @@ cd dsha-island
 
 > 本机设备策略禁止 `adb-shell pm install`，所以安装必须手动走系统安装器。
 
-1. 把 `out/current/dsha-island-0.1.7.apk` 传到手机（或从 `Download/DSHA/DSHA-Island/01-当前` 打开）。
+1. 把 `out/current/dsha-island-0.2.0.apk` 传到手机（或从 `Download/DSHA/DSHA-Island/01-当前` 打开）。
 2. 文件管理器点 APK → 继续安装（HyperOS 会提示“文件管理正尝试安装应用”）。
 3. 打开 **LSPosed 管理器** → 模块 → 勾选 **DSHA Island**。
 4. 作用域只勾 **`com.android.systemui`**（不要勾 DSHA，模块不进入 DSHA 进程）。
@@ -278,9 +278,9 @@ DSHA 没有任何文件/签名/数据被修改，回滚后通知恢复原样。
 
 ### 安装
 
-1. 安装 `out/current/dsha-island-lite-0.1.2.apk`；
+1. 安装 `out/current/dsha-island-lite-0.2.0.apk`；
 2. 打开 App → 允许通知 → 点「启动岛服务」；
-3. 在 DSHA 插件页安装 `out/current/dsh-island-lite-0.1.2.tar.gz`，重启一次 DSH/Web；
+3. 在 DSHA 插件页安装 `out/current/dsh-island-lite-0.2.0.tar.gz`，重启一次 DSH/Web；
 4. 回桌面跑一个任务，岛上应出现 `DSHA 图标 + 动作 + 内容`。
 
 ### root 路线显示路径（0.1.4）
@@ -300,7 +300,7 @@ DSHA 没有任何文件/签名/数据被修改，回滚后通知恢复原样。
 
 > 8797 只绑定 `127.0.0.1`；同机其他 App 理论上可以读这条状态（含路径/命令），仅供个人设备使用。
 
-### 显示规则（Lite 0.1.2）
+### 显示规则（Lite 0.2.0）
 
 | 事件 | 岛上短文本示例 |
 |---|---|
@@ -332,19 +332,11 @@ dumpsys deviceidle whitelist +io.github.dsha.island.lite
 - 端口固定 `8798`，避免和 WorkIsland 的 `8799` 冲突；
 - 任何本机 App 都能调用这个 HTTP 端口伪造显示，仅供个人设备使用。
 
-## 13. 变更记录
+## 13. 更新日志
 
-- **0.1.7**：组摘要只在终态放行（任务完成/已停止/需要处理），恢复完成通知；活动摘要仍跳过，避免双岛。
-- **0.1.6**：跳过 `id=0` 与 `FLAG_GROUP_SUMMARY` 的通知组摘要，避免 DSHA 自动分组导致第二个岛；日志增加 `grp=`。
-- **0.1.5**：修复停止按钮重复：`hintInfo.title` 改为「任务控制」，只保留 `actionTitle` 的「停止」；JSON 校验停止文案只出现 1 次。
-- **0.1.4**：修复「思考中/耗时」在岛上、卡片、按钮里重复；root 模块直接轮询插件 `127.0.0.1:8797/state` 读取动作/路径/当前动作耗时；展开卡片固定显示 `任务总耗时 X`；通知原标题/正文改为 `DSHA` / `任务进行中`。
-- **Lite 0.1.2**：新增 root 桥接模式（静默 `dsha_island_bridge`，作为插件直读不可达时的备用通道）。
-- **Lite 0.1.1**：短文本改为「动作 + 内容」（写入接路径、执行接命令、清单接进度）；活动状态 1 Hz 刷新耗时。
-- **Lite 0.1.0**：免 root 伴生 App + `dsh-island-lite` 插件；promoted 胶囊、清单进度、8 秒收工；端口 8798。
-- **0.1.3**：增加 `FLAG_FOREGROUND_SERVICE` / ID 1001 过滤，彻底阻止「DSHA 运行中」前台服务通知上岛；诊断日志带频道/id/flags。
-- **0.1.2**：只处理 `dsh_task_progress` 任务频道，过滤 `dsh_harness_channel` 前台服务通知（不再出现「DSHA 运行中」抢岛/横幅）；停止按钮改用 `hintInfo.actionInfo` 的带文字按钮。
-- **0.1.0**：首个可编译版本。
+完整历史、组件版本映射和版本策略见 [CHANGELOG.md](CHANGELOG.md)。
 
+- **0.2.0**：模块 / Lite / 插件 / Release 统一版本号；root 直读插件 8797；活动摘要不上岛、终态摘要保留完成通知；停止按钮去重；展开卡片显示任务总耗时。
 ## 14. 设计来源
 
 - 小米超级岛开发指南 / 模板库（`miui.focus.param`、`param_v2`、`imageTextInfoLeft` 等字段）；
