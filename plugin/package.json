@@ -8,7 +8,7 @@
     "lib/index.js",
     "cordis.patch.yml"
   ],
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "keywords": [
     "dsh",
     "plugin",

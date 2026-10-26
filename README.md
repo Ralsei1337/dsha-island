@@ -37,6 +37,7 @@
 - [12. 已知限制](#12-已知限制)
 - [13. 更新日志](#13-更新日志)
 - [CHANGELOG.md](CHANGELOG.md)
+- [15. 许可证](#15-许可证)
 - [从源码构建教程](docs/使用教程.md#9-从源码构建)
 
 ## 1. 它是什么
@@ -142,7 +143,7 @@ dsha-island/
 ├── README.md
 ├── CHANGELOG.md                         # 版本历史 / 版本策略
 ├── docs/使用教程.md                     # 手把手安装、验证、排错
-├── LICENSE                              # MIT
+├── LICENSE                              # GPL-3.0
 └── out/current/dsha-island-0.4.1.apk    # 构建产物
 ```
 
@@ -393,3 +394,17 @@ dumpsys deviceidle whitelist +io.github.dsha.island.lite
 - AOSP `Notification`：`EXTRA_REQUEST_PROMOTED_ONGOING`、`EXTRA_COLORIZED`、`EXTRA_SHORT_CRITICAL_TEXT`（`android.shortCriticalText`）。
 
 本项目的代码为独立实现，不包含 WorkIsland 的代码。
+
+---
+
+## 15. 许可证
+
+Copyright (C) 2026 Ralsei1337 and DSHA Island contributors.
+
+本项目从 2026-10-27 起使用 **GNU General Public License v3.0 only（GPL-3.0-only）**，全文见 [LICENSE](LICENSE)。
+
+- 可以运行、研究、修改、再分发；
+- 再分发修改版时，必须以 GPL-3.0-only 提供完整对应源码，并保留版权与许可声明；
+- 不提供任何担保；
+- **v0.4.1 及更早的 Release 仍按当时的 MIT 许可分发**；从本提交之后的新版本为 GPL-3.0-only；
+- 第三方依赖（如 `libxposed-api`）保持各自许可证，不因本仓库的 GPL 而改变。

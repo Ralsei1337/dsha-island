@@ -4,6 +4,13 @@
 共用同一个版本号；修复递增 patch，功能递增 minor。历史 0.1.x 是组件各自版本，
 映射见文末。
 
+## [Unreleased]
+
+### Changed
+
+- 许可证从 MIT 改为 **GPL-3.0-only**，全文见 `LICENSE`。
+- v0.4.1 及更早的 Release 仍按 MIT 分发；之后的新版本按 GPL-3.0-only 分发。
+
 ## [0.4.1] - 2026-10-27
 
 ### Fixed
