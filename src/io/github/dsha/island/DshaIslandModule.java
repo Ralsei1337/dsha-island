@@ -221,6 +221,10 @@ public final class DshaIslandModule extends XposedModule {
         // "DSHA is running in background" entry, not a task state.
         if ((n.flags & Notification.FLAG_FOREGROUND_SERVICE) != 0) return;
         if (sbn.getId() == 1001) return;
+        // Android auto-groups DSHA notifications; the summary (usually id 0)
+        // must never become a second island.
+        if (sbn.getId() == 0) return;
+        if ((n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) return;
         // Only the per-task channel belongs on the island.
         if (!"dsh_task_progress".equals(n.getChannelId())) return;
 
@@ -282,6 +286,7 @@ public final class DshaIslandModule extends XposedModule {
             log(Log.INFO, TAG, "enriched phase=" + kind + " short=" + model.shortText
                     + " ch=" + n.getChannelId() + " id=" + sbn.getId()
                     + " fgs=" + ((n.flags & Notification.FLAG_FOREGROUND_SERVICE) != 0)
+                    + " grp=" + ((n.flags & Notification.FLAG_GROUP_SUMMARY) != 0)
                     + " stop=" + (stop != null) + " open=" + (open != null));
         }
     }
