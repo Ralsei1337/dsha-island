@@ -5,6 +5,8 @@
  * companion app on 127.0.0.1:8798. The app turns that into one promoted
  * notification (HyperOS capsule). No Android API is used from this plugin.
  */
+import http from 'node:http'
+
 export const name = 'dsh-island-lite'
 
 const BRIDGE = 'http://127.0.0.1:8798'
@@ -24,6 +26,54 @@ const ARG_KEYS = ['command', 'cmd', 'script', 'path', 'file_path', 'filePath',
   'pattern', 'query', 'url', 'description', 'prompt']
 
 const buckets = new Map()
+
+let latest = { state: 'idle', text: '', startedAt: 0, done: -1, total: -1, updatedAt: 0 }
+let stateServer
+
+function remember(path, params) {
+  if (path === '/state' || path === '/start') {
+    const done = Number(params.todoDone)
+    const total = Number(params.todoTotal)
+    latest = {
+      state: String(params.state || 'running'),
+      text: String(params.text || ''),
+      startedAt: Number(params.startedAt) || 0,
+      done: Number.isFinite(done) ? done : -1,
+      total: Number.isFinite(total) ? total : -1,
+      updatedAt: Date.now(),
+    }
+  } else if (path === '/done') {
+    latest = { state: 'done', text: String(params.text || ''), startedAt: 0, done: -1, total: -1, updatedAt: Date.now() }
+  } else if (path === '/idle' || path === '/cancel') {
+    latest = { state: 'idle', text: '', startedAt: 0, done: -1, total: -1, updatedAt: Date.now() }
+  }
+}
+
+function startStateServer() {
+  if (stateServer) return
+  try {
+    stateServer = http.createServer((req, res) => {
+      const url = req.url || ''
+      if (url.startsWith('/state')) {
+        const body = JSON.stringify(latest)
+        res.writeHead(200, { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) })
+        res.end(body)
+        return
+      }
+      if (url.startsWith('/ping')) {
+        res.writeHead(200)
+        res.end('OK')
+        return
+      }
+      res.writeHead(404)
+      res.end()
+    })
+    stateServer.on('error', () => { stateServer = null })
+    stateServer.listen(8797, '127.0.0.1')
+  } catch {
+    stateServer = null
+  }
+}
 
 function sessionKey(session) {
   try {
@@ -67,6 +117,7 @@ function detailOf(argsJson) {
 }
 
 async function push(path, params) {
+  remember(path, params)
   try {
     const qs = new URLSearchParams()
     for (const [k, v] of Object.entries(params || {})) {
@@ -82,10 +133,17 @@ function sendState(b, state, text) {
   const signature = `${state}|${text}|${b.todoDone}/${b.todoTotal}`
   const now = Date.now()
   const fire = () => {
+    if (signature !== b.last) b.actionStartedAt = Date.now()
     b.last = signature
     b.lastAt = Date.now()
     b.lastState = state
-    void push('/state', { state, text, todoDone: b.todoDone, todoTotal: b.todoTotal })
+    void push('/state', {
+      state,
+      text,
+      todoDone: b.todoDone,
+      todoTotal: b.todoTotal,
+      startedAt: b.actionStartedAt || 0,
+    })
   }
   if (signature === b.last && now - b.lastAt < 1200) return
   if (now - b.lastAt < MIN_INTERVAL_MS) {
@@ -114,12 +172,14 @@ function onEvent(session, event) {
       b.lastState = 'thinking'
       b.last = `thinking|生成中|${b.todoDone}/${b.todoTotal}`
       b.lastAt = Date.now()
+      b.actionStartedAt = Date.now()
       if (b.timer) { clearTimeout(b.timer); b.timer = undefined }
       void push('/state', {
         state: 'thinking',
         text: '生成中',
         todoDone: b.todoDone,
         todoTotal: b.todoTotal,
+        startedAt: b.actionStartedAt,
       })
     }
     return
@@ -138,12 +198,14 @@ function onEvent(session, event) {
         b.last = signature
         b.lastAt = Date.now()
         b.lastState = 'todo'
+        b.actionStartedAt = Date.now()
         if (b.timer) { clearTimeout(b.timer); b.timer = undefined }
         void push('/state', {
           state: 'todo',
           text,
           todoDone: b.todoDone,
           todoTotal: b.todoTotal,
+          startedAt: b.actionStartedAt,
         })
         return
       }
@@ -162,12 +224,14 @@ function onEvent(session, event) {
       b.last = signature
       b.lastAt = now
       b.lastState = state
+      b.actionStartedAt = now
       if (b.timer) { clearTimeout(b.timer); b.timer = undefined }
       void push('/state', {
         state,
         text: detail || state,
         todoDone: b.todoDone,
         todoTotal: b.todoTotal,
+        startedAt: b.actionStartedAt,
       })
       return
     }
@@ -186,6 +250,7 @@ function onEvent(session, event) {
 
 export function apply(ctx, config) {
   if (config?.auto === false) return
+  startStateServer()
   ctx.on('session/event', (session, event) => {
     try {
       onEvent(session, event)
@@ -194,5 +259,7 @@ export function apply(ctx, config) {
   ctx.on('dispose', () => {
     for (const b of buckets.values()) if (b.timer) clearTimeout(b.timer)
     buckets.clear()
+    try { stateServer?.close() } catch { /* ignore */ }
+    stateServer = null
   })
 }

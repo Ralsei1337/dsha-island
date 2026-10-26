@@ -9,13 +9,21 @@ import android.os.SystemClock;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
+
+import org.json.JSONObject;
 
 import io.github.libxposed.api.XposedInterface;
 import io.github.libxposed.api.XposedModule;
@@ -49,10 +57,17 @@ public final class DshaIslandModule extends XposedModule {
     private volatile long bridgeStartedAt = 0L;
     private volatile long bridgeAt = 0L;
 
+    private volatile boolean pollerStarted = false;
+    private volatile String directState = "";
+    private volatile String directText = "";
+    private volatile long directStartedAt = 0L;
+    private volatile long directAt = 0L;
+
     @Override
     public void onPackageLoaded(XposedModuleInterface.PackageLoadedParam param) {
         if (!"com.android.systemui".equals(param.getPackageName())) return;
         log(Log.INFO, TAG, "SystemUI loaded, installing DSHA island hooks");
+        startPoller();
         try {
             install(param.getDefaultClassLoader());
         } catch (Throwable t) {
@@ -213,7 +228,12 @@ public final class DshaIslandModule extends XposedModule {
         Phase.Kind kind = Phase.parse(text);
         String seconds = Phase.seconds(text);
         IslandPayload.Model model;
-        if (bridgeFresh()) {
+        if (directFresh()) {
+            String action = bridgeAction(directState);
+            String detail = directDetail();
+            String dur = directSeconds(seconds);
+            model = IslandPayload.custom(action, detail, dur, seconds, "done".equals(directState));
+        } else if (bridgeFresh()) {
             String action = bridgeAction(bridgeState);
             String detail = bridgeDetail();
             String dur = bridgeSeconds(seconds);
@@ -264,6 +284,74 @@ public final class DshaIslandModule extends XposedModule {
                     + " fgs=" + ((n.flags & Notification.FLAG_FOREGROUND_SERVICE) != 0)
                     + " stop=" + (stop != null) + " open=" + (open != null));
         }
+    }
+
+    private void startPoller() {
+        if (pollerStarted) return;
+        pollerStarted = true;
+        Thread thread = new Thread(() -> {
+            while (true) {
+                try {
+                    pollDirect();
+                } catch (Throwable ignored) {
+                }
+                try {
+                    Thread.sleep(1_000L);
+                } catch (InterruptedException interrupted) {
+                    return;
+                }
+            }
+        }, "dsha-island-direct");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void pollDirect() {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), 8797), 300);
+            socket.setSoTimeout(500);
+            OutputStream out = socket.getOutputStream();
+            out.write(("GET /state HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
+                    .getBytes(StandardCharsets.US_ASCII));
+            out.flush();
+            InputStream in = socket.getInputStream();
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[1024];
+            int read;
+            while ((read = in.read(chunk)) > 0) buffer.write(chunk, 0, read);
+            String response = new String(buffer.toByteArray(), StandardCharsets.UTF_8);
+            int split = response.indexOf("\r\n\r\n");
+            String body = split >= 0 ? response.substring(split + 4) : response;
+            JSONObject object = new JSONObject(body);
+            String state = object.optString("state", "");
+            if (state.isEmpty()) return;
+            directState = state;
+            directText = object.optString("text", "");
+            directStartedAt = object.optLong("startedAt", 0L);
+            directAt = SystemClock.elapsedRealtime();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private boolean directFresh() {
+        long at = directAt;
+        return at != 0L && SystemClock.elapsedRealtime() - at <= 3_000L
+                && !directState.isEmpty() && !"idle".equals(directState);
+    }
+
+    private String directDetail() {
+        if ("thinking".equals(directState) || "waiting".equals(directState)) return "";
+        return directText == null ? "" : directText.trim();
+    }
+
+    private String directSeconds(String fallback) {
+        if ("done".equals(directState)) return "";
+        long started = directStartedAt;
+        if (started > 0) {
+            long seconds = Math.max(0, (System.currentTimeMillis() - started) / 1000);
+            return Long.toString(seconds);
+        }
+        return fallback;
     }
 
     private void captureBridge(StatusBarNotification sbn) {
