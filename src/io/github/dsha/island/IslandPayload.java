@@ -130,7 +130,7 @@ final class IslandPayload {
 
             JSONObject hint = new JSONObject();
             hint.put("type", 2);
-            hint.put("title", title);
+            hint.put("title", "任务控制");
             hint.put("content", "当前任务");
             hint.put("actionInfo", actionInfo);
             param.put("hintInfo", hint);

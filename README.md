@@ -13,7 +13,7 @@
 
 
 > 独立的 HyperOS 4 超级岛适配模块，**不修改 DSHA、不依赖 WorkIsland、不读取通知内容以外的数据**。
-> 状态：v0.1.4 dev / Lite 0.1.2（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
+> 状态：v0.1.5 dev / Lite 0.1.2（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
 
 ---
 
@@ -102,7 +102,7 @@ dsha-island/
 │   ├── IslandPayload.java              # param_v2 / pics / actions
 │   ├── Phase.java                      # 通知文案 -> 阶段
 │   └── SettingsActivity.java           # 说明页（无权限、无网络）
-└── out/dsha-island-0.1.0.apk           # 构建产物
+└── out/current/dsha-island-0.1.5.apk    # 构建产物
 ```
 
 ---
@@ -114,7 +114,7 @@ dsha-island/
 ```bash
 cd dsha-island
 ./build.sh
-# 产物：out/dsha-island-0.1.0.apk
+# 产物：out/current/dsha-island-0.1.5.apk
 ```
 
 依赖：
@@ -135,7 +135,7 @@ cd dsha-island
 
 > 本机设备策略禁止 `adb-shell pm install`，所以安装必须手动走系统安装器。
 
-1. 把 `out/dsha-island-0.1.0.apk` 传到手机（或从 `Download/DSHA` 打开）。
+1. 把 `out/current/dsha-island-0.1.5.apk` 传到手机（或从 `Download/DSHA/DSHA-Island/01-当前` 打开）。
 2. 文件管理器点 APK → 继续安装（HyperOS 会提示“文件管理正尝试安装应用”）。
 3. 打开 **LSPosed 管理器** → 模块 → 勾选 **DSHA Island**。
 4. 作用域只勾 **`com.android.systemui`**（不要勾 DSHA，模块不进入 DSHA 进程）。
@@ -334,6 +334,7 @@ dumpsys deviceidle whitelist +io.github.dsha.island.lite
 
 ## 13. 变更记录
 
+- **0.1.5**：修复停止按钮重复：`hintInfo.title` 改为「任务控制」，只保留 `actionTitle` 的「停止」；JSON 校验停止文案只出现 1 次。
 - **0.1.4**：修复「思考中/耗时」在岛上、卡片、按钮里重复；root 模块直接轮询插件 `127.0.0.1:8797/state` 读取动作/路径/当前动作耗时；展开卡片固定显示 `任务总耗时 X`；通知原标题/正文改为 `DSHA` / `任务进行中`。
 - **Lite 0.1.2**：新增 root 桥接模式（静默 `dsha_island_bridge`，作为插件直读不可达时的备用通道）。
 - **Lite 0.1.1**：短文本改为「动作 + 内容」（写入接路径、执行接命令、清单接进度）；活动状态 1 Hz 刷新耗时。
