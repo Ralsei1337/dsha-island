@@ -1,0 +1,16 @@
+# signing material — never commit
+keys/
+*.jks
+*.keystore
+
+# build outputs
+out/
+build/
+.gradle/
+*.apk
+*.tar.gz
+
+# editor / OS
+.idea/
+.vscode/
+.DS_Store

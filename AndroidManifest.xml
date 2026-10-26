@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.github.dsha.island"
+    android:versionCode="3"
+    android:versionName="0.1.3">
+
+    <uses-sdk android:minSdkVersion="33" android:targetSdkVersion="37" />
+
+    <application
+        android:label="DSHA Island"
+        android:theme="@android:style/Theme.DeviceDefault.DayNight">
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="true"
+            android:label="DSHA Island">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

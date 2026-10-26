@@ -1,0 +1,24 @@
+{
+  "name": "dsh-island-lite",
+  "version": "0.1.1",
+  "description": "Push DeepSeek Harness run state to DSHA Island Lite (HyperOS capsule, no root)",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib/index.js",
+    "cordis.patch.yml"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "plugin",
+    "hyperos",
+    "super-island",
+    "no-root"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
