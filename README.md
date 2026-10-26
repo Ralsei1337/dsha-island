@@ -2,18 +2,18 @@
 
 ## 下载
 
-[v0.3.0 Release](https://github.com/Ralsei1337/dsha-island/releases/tag/v0.3.0)
+[v0.3.1 Release](https://github.com/Ralsei1337/dsha-island/releases/tag/v0.3.1)
 
 | 文件 | 用途 |
 |---|---|
-| `dsha-island-0.3.0.apk` | root + LSPosed，完整大岛 |
-| `dsha-island-lite-0.3.0.apk` | 免 root 伴生 App |
-| `dsh-island-lite-0.3.0.tar.gz` | DSHA 插件（root 直读 8797 / Lite 推送） |
+| `dsha-island-0.3.1.apk` | root + LSPosed，完整大岛 |
+| `dsha-island-lite-0.3.1.apk` | 免 root 伴生 App |
+| `dsh-island-lite-0.3.1.tar.gz` | DSHA 插件（root 直读 8797 / Lite 推送） |
 | `SHA256SUMS.txt` | 校验和 |
 
 
 > 独立的 HyperOS 4 超级岛适配模块，**不修改 DSHA、不依赖 WorkIsland、不读取通知内容以外的数据**。
-> 状态：v0.3.0（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
+> 状态：v0.3.1（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
 
 ---
 
@@ -117,7 +117,7 @@ dsha-island/
 │   ├── IslandPayload.java              # param_v2 / pics / actions
 │   ├── Phase.java                      # 通知文案 -> 阶段
 │   └── SettingsActivity.java           # 说明页（无权限、无网络）
-└── out/current/dsha-island-0.3.0.apk    # 构建产物
+└── out/current/dsha-island-0.3.1.apk    # 构建产物
 ```
 
 ---
@@ -129,7 +129,7 @@ dsha-island/
 ```bash
 cd dsha-island
 ./build.sh
-# 产物：out/current/dsha-island-0.3.0.apk
+# 产物：out/current/dsha-island-0.3.1.apk
 ```
 
 依赖：
@@ -150,7 +150,7 @@ cd dsha-island
 
 > 本机设备策略禁止 `adb-shell pm install`，所以安装必须手动走系统安装器。
 
-1. 把 `out/current/dsha-island-0.3.0.apk` 传到手机（或从 `Download/DSHA/DSHA-Island/01-当前` 打开）。
+1. 把 `out/current/dsha-island-0.3.1.apk` 传到手机（或从 `Download/DSHA/DSHA-Island/01-当前` 打开）。
 2. 文件管理器点 APK → 继续安装（HyperOS 会提示“文件管理正尝试安装应用”）。
 3. 打开 **LSPosed 管理器** → 模块 → 勾选 **DSHA Island**。
 4. 作用域只勾 **`com.android.systemui`**（不要勾 DSHA，模块不进入 DSHA 进程）。
@@ -293,9 +293,9 @@ DSHA 没有任何文件/签名/数据被修改，回滚后通知恢复原样。
 
 ### 安装
 
-1. 安装 `out/current/dsha-island-lite-0.3.0.apk`；
+1. 安装 `out/current/dsha-island-lite-0.3.1.apk`；
 2. 打开 App → 允许通知 → 点「启动岛服务」；
-3. 在 DSHA 插件页安装 `out/current/dsh-island-lite-0.3.0.tar.gz`，重启一次 DSH/Web；
+3. 在 DSHA 插件页安装 `out/current/dsh-island-lite-0.3.1.tar.gz`，重启一次 DSH/Web；
 4. 回桌面跑一个任务，岛上应出现 `DSHA 图标 + 动作 + 内容`。
 
 ### root 路线显示路径（0.1.4）
@@ -315,7 +315,7 @@ DSHA 没有任何文件/签名/数据被修改，回滚后通知恢复原样。
 
 > 8797 只绑定 `127.0.0.1`；同机其他 App 理论上可以读这条状态（含路径/命令），仅供个人设备使用。
 
-### 显示规则（Lite 0.3.0）
+### 显示规则（Lite 0.3.1）
 
 | 事件 | 岛上短文本示例 |
 |---|---|
@@ -351,6 +351,7 @@ dumpsys deviceidle whitelist +io.github.dsha.island.lite
 
 完整历史、组件版本映射和版本策略见 [CHANGELOG.md](CHANGELOG.md)。
 
+- **0.3.1**：修复卡住/重复：不再因旧 `miui.focus.param` 跳过更新；通知监听器增加兜底 enrich；直读状态缓存 12s；插件状态服务跨 HMR 复用、自动重试，并带每秒心跳，失联后自动降级。
 - **0.3.0**：新增平台适配层（Xiaomi/OPPO/vivo/Huawei/Honor）；ColorOS 16 走 AOSP Live Updates；vivo/华为无公开私有接口时降级普通通知。
 - **0.2.0**：模块 / Lite / 插件 / Release 统一版本号；root 直读插件 8797；活动摘要不上岛、终态摘要保留完成通知；停止按钮去重；展开卡片显示任务总耗时。
 ## 14. 设计来源

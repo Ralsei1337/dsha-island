@@ -64,6 +64,7 @@ public final class DshaIslandModule extends XposedModule {
     private volatile String directText = "";
     private volatile long directStartedAt = 0L;
     private volatile long directAt = 0L;
+    private volatile long directAliveAt = 0L;
 
     @Override
     public void onPackageLoaded(XposedModuleInterface.PackageLoadedParam param) {
@@ -187,6 +188,14 @@ public final class DshaIslandModule extends XposedModule {
                             } catch (Throwable t) {
                                 log(Log.ERROR, TAG, "bridge listener capture failed", t);
                             }
+                        } else if (DSHA.equals(sbn.getPackageName())) {
+                            // Fallback for builds where generateInnerNotifBean moves class loaders.
+                            armedAt = SystemClock.elapsedRealtime();
+                            try {
+                                enrich(sbn);
+                            } catch (Throwable t) {
+                                log(Log.ERROR, TAG, "listener enrich failed", t);
+                            }
                         }
                     }
                     return chain.proceed();
@@ -223,7 +232,6 @@ public final class DshaIslandModule extends XposedModule {
         if (n == null) return;
         Bundle extras = n.extras;
         if (extras == null) return;
-        if (extras.containsKey("miui.focus.param")) return; // another module already owns it
         CharSequence text = extras.getCharSequence(Notification.EXTRA_TEXT);
         Phase.Kind kind = Phase.parse(text);
         boolean summary = sbn.getId() == 0
@@ -241,13 +249,16 @@ public final class DshaIslandModule extends XposedModule {
         if (!"dsh_task_progress".equals(n.getChannelId())) return;
 
         String seconds = Phase.seconds(text);
+        boolean direct = directFresh();
+        boolean bridge = !direct && bridgeFresh();
+        String source = direct ? "direct" : bridge ? "bridge" : "notif";
         IslandPayload.Model model;
-        if (directFresh()) {
+        if (direct) {
             String action = bridgeAction(directState);
             String detail = directDetail();
             String dur = directSeconds(seconds);
             model = IslandPayload.custom(action, detail, dur, seconds, "done".equals(directState));
-        } else if (bridgeFresh()) {
+        } else if (bridge) {
             String action = bridgeAction(bridgeState);
             String detail = bridgeDetail();
             String dur = bridgeSeconds(seconds);
@@ -275,6 +286,10 @@ public final class DshaIslandModule extends XposedModule {
             json = null;
         }
 
+        extras.remove("miui.focus.param");
+        extras.remove("miui.focus.pics");
+        extras.remove("miui.focus.actions");
+
         // The focus card may render the original title/text as well as baseInfo.
         // Replace them with detail-only text so the phase/time is not repeated.
         extras.putCharSequence(Notification.EXTRA_TITLE, "DSHA");
@@ -297,6 +312,7 @@ public final class DshaIslandModule extends XposedModule {
                     + " ch=" + n.getChannelId() + " id=" + sbn.getId()
                     + " fgs=" + ((n.flags & Notification.FLAG_FOREGROUND_SERVICE) != 0)
                     + " grp=" + ((n.flags & Notification.FLAG_GROUP_SUMMARY) != 0)
+                    + " src=" + source
                     + " stop=" + (stop != null) + " open=" + (open != null));
         }
     }
@@ -349,13 +365,17 @@ public final class DshaIslandModule extends XposedModule {
             directText = object.optString("text", "");
             directStartedAt = object.optLong("startedAt", 0L);
             directAt = SystemClock.elapsedRealtime();
+            long alive = object.optLong("aliveAt", 0L);
+            directAliveAt = alive > 0 ? alive : System.currentTimeMillis();
         } catch (Throwable ignored) {
         }
     }
 
     private boolean directFresh() {
         long at = directAt;
-        return at != 0L && SystemClock.elapsedRealtime() - at <= 3_000L
+        long alive = directAliveAt;
+        return at != 0L && SystemClock.elapsedRealtime() - at <= 12_000L
+                && alive > 0 && System.currentTimeMillis() - alive <= 12_000L
                 && !directState.isEmpty() && !"idle".equals(directState);
     }
 
@@ -390,7 +410,7 @@ public final class DshaIslandModule extends XposedModule {
 
     private boolean bridgeFresh() {
         long at = bridgeAt;
-        return at != 0L && SystemClock.elapsedRealtime() - at <= 3_500L
+        return at != 0L && SystemClock.elapsedRealtime() - at <= 10_000L
                 && !bridgeState.isEmpty() && !"idle".equals(bridgeState);
     }
 
