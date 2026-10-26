@@ -2,18 +2,18 @@
 
 ## 下载
 
-[v0.1.3 Release](https://github.com/Ralsei1337/dsha-island/releases/tag/v0.1.3)
+[v0.1.7 Release](https://github.com/Ralsei1337/dsha-island/releases/tag/v0.1.7)
 
 | 文件 | 用途 |
 |---|---|
-| `dsha-island-0.1.3.apk` | root + LSPosed，完整大岛 |
-| `dsha-island-lite-0.1.1.apk` | 免 root 伴生 App |
-| `dsh-island-lite-0.1.1.tar.gz` | 免 root 的 DSHA 插件 |
+| `dsha-island-0.1.7.apk` | root + LSPosed，完整大岛 |
+| `dsha-island-lite-0.1.2.apk` | 免 root 伴生 App |
+| `dsh-island-lite-0.1.2.tar.gz` | DSHA 插件（root 直读 8797 / Lite 推送） |
 | `SHA256SUMS.txt` | 校验和 |
 
 
 > 独立的 HyperOS 4 超级岛适配模块，**不修改 DSHA、不依赖 WorkIsland、不读取通知内容以外的数据**。
-> 状态：v0.1.7 dev / Lite 0.1.2（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
+> 状态：v0.1.7 / Lite 0.1.2（已真机验证官方 param 生效；旧版 FGS 通知会抢岛，0.1.2 已按频道过滤）
 
 ---
 
