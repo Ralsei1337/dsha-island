@@ -217,19 +217,22 @@ public final class DshaIslandModule extends XposedModule {
         Bundle extras = n.extras;
         if (extras == null) return;
         if (extras.containsKey("miui.focus.param")) return; // another module already owns it
+        CharSequence text = extras.getCharSequence(Notification.EXTRA_TEXT);
+        Phase.Kind kind = Phase.parse(text);
+        boolean summary = sbn.getId() == 0
+                || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0;
+        // The active group summary duplicates the child island. Keep only the
+        // terminal summary: DSHA cancels the terminal child after ~1s, so the
+        // summary is the only completion notification.
+        if (summary && !Phase.terminal(kind)) return;
+
         // Never islandify a foreground-service notification: it is the permanent
         // "DSHA is running in background" entry, not a task state.
         if ((n.flags & Notification.FLAG_FOREGROUND_SERVICE) != 0) return;
         if (sbn.getId() == 1001) return;
-        // Android auto-groups DSHA notifications; the summary (usually id 0)
-        // must never become a second island.
-        if (sbn.getId() == 0) return;
-        if ((n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) return;
         // Only the per-task channel belongs on the island.
         if (!"dsh_task_progress".equals(n.getChannelId())) return;
 
-        CharSequence text = extras.getCharSequence(Notification.EXTRA_TEXT);
-        Phase.Kind kind = Phase.parse(text);
         String seconds = Phase.seconds(text);
         IslandPayload.Model model;
         if (directFresh()) {

@@ -111,7 +111,9 @@ final class IslandPayload {
         if (!m.totalSeconds.isEmpty()) {
             base.put("subTitle", "任务总耗时 " + m.totalSeconds);
         }
-        base.put("content", m.detail.isEmpty() ? "任务进行中" : m.detail);
+        base.put("content", m.detail.isEmpty()
+                ? ("任务完成".equals(m.action) || "已停止".equals(m.action) ? "任务已结束" : "任务进行中")
+                : m.detail);
         param.put("baseInfo", base);
 
         JSONArray actions = new JSONArray();
