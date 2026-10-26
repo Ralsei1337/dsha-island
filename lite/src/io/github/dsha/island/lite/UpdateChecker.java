@@ -49,7 +49,9 @@ final class UpdateChecker {
             connection.setRequestProperty("Accept", "application/vnd.github+json");
             int code = connection.getResponseCode();
             if (code != 200) {
-                return new Result(current, current, null, null, "GitHub HTTP " + code);
+                Result fallback = checkRedirect(current);
+                return fallback != null ? fallback
+                        : new Result(current, current, null, null, "GitHub HTTP " + code);
             }
             InputStream in = connection.getInputStream();
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -67,10 +69,41 @@ final class UpdateChecker {
             }
             return new Result(current, tag, url, notes, null);
         } catch (Throwable t) {
-            return new Result(current, current, null, null, t.getClass().getSimpleName() + ": " + t.getMessage());
+            Result fallback = checkRedirect(current);
+            return fallback != null ? fallback
+                    : new Result(current, current, null, null,
+                    t.getClass().getSimpleName() + ": " + t.getMessage());
         } finally {
             if (connection != null) connection.disconnect();
         }
+    }
+
+    /** API rate limits are common on shared IPs; the release page redirect has none. */
+    private static Result checkRedirect(String current) {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(
+                    "https://github.com/Ralsei1337/dsha-island/releases/latest").openConnection();
+            connection.setInstanceFollowRedirects(true);
+            connection.setConnectTimeout(8_000);
+            connection.setReadTimeout(8_000);
+            connection.setRequestProperty("User-Agent", "DSHA-Island-Lite");
+            int code = connection.getResponseCode();
+            String url = connection.getURL().toString();
+            int tag = url.indexOf("/tag/");
+            if (code == 200 && tag >= 0) {
+                String latest = url.substring(tag + 5);
+                int slash = latest.indexOf('/');
+                if (slash >= 0) latest = latest.substring(0, slash);
+                if (!latest.isEmpty()) {
+                    return new Result(current, latest, url, "", null);
+                }
+            }
+        } catch (Throwable ignored) {
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+        return null;
     }
 
     static String versionName(Context context) {
