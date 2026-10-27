@@ -143,7 +143,7 @@ dsha-island/
 ├── README.md
 ├── CHANGELOG.md                         # 版本历史 / 版本策略
 ├── docs/使用教程.md                     # 手把手安装、验证、排错
-├── LICENSE                              # GPL-3.0
+├── LICENSE                              # MIT
 └── out/current/dsha-island-0.4.1.apk    # 构建产物
 ```
 
@@ -401,11 +401,12 @@ dumpsys deviceidle whitelist +io.github.dsha.island.lite
 
 Copyright (C) 2026 Ralsei1337 and DSHA Island contributors.
 
-本项目从 2026-10-27 起使用 **GNU General Public License v3.0 only（GPL-3.0-only）**，全文见 [LICENSE](LICENSE)。
+本项目使用 **MIT License**，全文见 [LICENSE](LICENSE)。
 
-- 可以运行、研究、修改、再分发；
-- 再分发修改版时，必须以 GPL-3.0-only 提供完整对应源码，并保留版权与许可声明；
+- 可以运行、研究、修改、再分发，包括商业使用；
+- 再分发时保留版权与许可声明即可，不要求开源你的修改；
 - 不提供任何担保；
-- **v0.4.1 及更早的 Release 仍按当时的 MIT 许可分发**；从本提交之后的新版本为 GPL-3.0-only；
-- 第三方依赖（如 `libxposed-api`）保持各自许可证，不因本仓库的 GPL 而改变；
+- 全部 Release（含 v0.4.1 及更早）均按 MIT 分发；2026-10-27 曾短暂在未发版的工作树中
+  改为 GPL-3.0-only，该改动未随任何 Release 发布，现已撤回；
+- 第三方依赖（如 `libxposed-api`）保持各自许可证，不因本仓库的许可证而改变；
 - 对应源码：本仓库 `main` 及对应版本 tag。
